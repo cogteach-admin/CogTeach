@@ -1,0 +1,10 @@
+# my-backendconfig.yaml
+# see https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_backendconfig_parameters
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: backend-config
+spec:
+  timeoutSec: 120
+  connectionDraining:
+    drainingTimeoutSec: 120

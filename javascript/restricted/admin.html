@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin page of CogTeach</title>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <!--  Socket.io  -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"></script>
+    <!--  Bootstrap and related helpers  -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa"
+            crossorigin="anonymous"></script>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+
+    <!--  Zoom and visualization  -->
+    <script src="/js/webgazer.js"></script>
+    <script src="https://unpkg.com/mathjs@8.0.1/lib/browser/math.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="/js/gazeClass.js"></script>
+    <!--Custome styles-->
+    <style type="text/css">
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 5%;
+            width: 80%;
+        }
+
+        /*#container {*/
+        /*    margin-left: auto;*/
+        /*    margin-right: auto;*/
+        /*    width: 100%;*/
+        /*    height: 100%;*/
+        /*}*/
+
+        #websdk-iframe {
+            width: 100%;
+            height: 80%;
+            border: 1px;
+            border-color: red;
+            border-style: dashed;
+            position: fixed;
+            margin: 0;
+        }
+
+        #plotting_svg, #cognitive_svg, #action_svg {
+            position: absolute;
+            z-index: 100;
+        }
+
+        text {
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+
+        .invisible {
+            visibility: hidden;
+        }
+    </style>
+
+</head>
+<body>
+
+<nav>
+    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        <a class="nav-item nav-link active" id="nav-workshop-tab" data-toggle="tab" href="#nav-workshop" role="tab"
+           aria-controls="nav-workshop" aria-selected="false">Workshop</a>
+        <a class="nav-item nav-link" id="nav-home-tab" data-toggle="tab" href="#nav-info-hub" role="tab"
+           aria-controls="nav-home" aria-selected="true">Info Hub</a>
+        <a class="nav-item nav-link" id="nav-profile-tab" data-toggle="tab" href="#nav-zoom" role="tab"
+           aria-controls="nav-profile" aria-selected="false">Zoom</a>
+    </div>
+</nav>
+
+<div class="tab-content" id="nav-tabContent">
+    <div class="tab-pane fade" id="nav-info-hub" role="tabpanel" aria-labelledby="nav-home-tab">
+        <div class="card-columns">
+            <div class="card" id="post-card">
+                <div class="card-body">
+                    <h5 class="card-title">Post trial information</h5>
+                    <form>
+                        <div class="form-group">
+                            <label for="post-lecture-title">Lecture title</label>
+                            <input type="text" class="form-control" id="post-lecture-title">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-lecture-abstract">Lecture abstract</label>
+                            <textarea class="form-control" id="post-lecture-abstract" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-lecture-instructor">Lecture instructor</label>
+                            <input type="text" class="form-control" id="post-lecture-instructor">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-lecture-time">Lecture time</label>
+                            <div class="form-row">
+                                <div class="col">
+                                    <input type="date" class="form-control" id="post-lecture-date">
+                                </div>
+                                <div class="col">
+                                    <input type="time" class="form-control" id="post-lecture-time">
+                                </div>
+                                <div class="col">
+                                    <select class="form-control" id="post-timezone">
+                                        <option value="-0700">PST</option>
+                                        <option value="-0600">MST</option>
+                                        <option value="-0500">CST</option>
+                                        <option value="-0400">EST</option>
+                                        <option value="+0800">BJG</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-lecture-zoomid">Lecture Zoom ID</label>
+                            <input type="text" class="form-control" id="post-lecture-zoomid">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-lecture-title">Gaze information</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gazeinfo" id="gazeinfo-true"
+                                       value="true">
+                                <label class="form-check-label" for="gazeinfo-true">On</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gazeinfo" id="gazeinfo-false"
+                                       value="false">
+                                <label class="form-check-label" for="gazeinfo-false">Off</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-lecture-title">Cognitive information</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="coginfo" id="coginfo-true"
+                                       value="true">
+                                <label class="form-check-label" for="coginfo-true">On</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="coginfo" id="coginfo-false"
+                                       value="false">
+                                <label class="form-check-label" for="coginfo-false">Off</label>
+                            </div>
+                        </div>
+
+                        <button id="post-btn" class="btn btn-primary">Submit</button>
+                        <input type="button" id="clear-btn" class="btn btn-secondary" onclick="clearCard()"
+                               value="Clear">
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" id="name-title">Participant List</h3>
+                    <p class="card-text" id="participant-description">Socket is turned off. Cannot show
+                        participants.</p>
+                </div>
+                <ul class="list-group list-group-flush" id="name-list">
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" id="countdown-title">Next trial will start within:</h3>
+                    <p class="card-text" id="countdown-description"></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" id="toolkits">Toolkits</h3>
+                    <button type="button" class="btn btn-primary" id="student-start-trigger">Send 'student start'
+                    </button>
+                    <button type="button" class="btn btn-primary" id="teacher-start-trigger">Send 'teacher start'
+                    </button>
+                </div>
+                <div class="card-footer text-muted" id="toolkits-feedback">
+                    Shows feedback from toolkits.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="nav-zoom" role="tabpanel" aria-labelledby="nav-profile-tab">
+        <div id="container" ondblclick="e.preventDefault();">
+            <!--<img src='regression.jpg'>-->
+        </div>
+    </div>
+
+    <div class="tab-pane fade show active" id="nav-workshop" role="tabpanel" aria-labelledby="nav-profile-tab">
+
+        <form>
+            <div class="row">
+                <div class="col-auto">
+                    <select class="form-select" aria-label="Select action" id="workshop-action-select">
+                        <option value="flush">Flush to files</option>
+                        <option value="reload">Reload from disk</option>
+                        <option value="change">Change info</option>
+                        <option value="fetch" selected>Fetch info</option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <select class="form-select" aria-label="Select information name" id="workshop-info-select">
+                        <option value="">Info name</option>
+                        <option value="user_profile" selected>All profiles</option>
+                        <option value="talk">Specific talk history</option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <input type="text" class="form-control" placeholder="Student ID" aria-label="Student ID" id="workshop-student-id">
+                </div>
+                <div class="col-auto">
+                    <input type="text" class="form-control" placeholder="Talk ID" aria-label="Talk ID" id="workshop-talk-id">
+                </div>
+
+                <div class="col-auto">
+                    <select class="form-select" aria-label="Choose new value" id="workshop-new-value">
+                        <option value="">New value</option>
+                        <option value="True" selected>True (watched)</option>
+                        <option value="False">False (not watched)</option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" id="workshop-btn">Submit</button>
+                </div>
+            </div>
+        </form>
+
+        <hr class="my-4 border-dark">
+
+        <form>
+            <div class="row">
+                <div class="col-auto">
+                    <select class="form-select" aria-label="Select action" id="workshop-suspension-action-select">
+                        <option value="add">Add whitelist names</option>
+                        <option value="suspend">Change suspended state</option>
+                        <option value="fetch" selected>Fetch suspension info</option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <input type="text" class="form-control" placeholder="First Name" aria-label="First Name" id="workshop-suspension-first-name">
+                </div>
+                <div class="col-auto">
+                    <input type="text" class="form-control" placeholder="Last Name" aria-label="Last Name" id="workshop-suspension-last-name">
+                </div>
+
+                <div class="col-auto">
+                    <select class="form-select" aria-label="Choose new value" id="workshop-suspension-new-value">
+                        <option value="true" selected>True (suspended)</option>
+                        <option value="false">False (not suspended)</option>
+                    </select>
+                </div>
+
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary" id="workshop-suspension-btn">Submit</button>
+                </div>
+            </div>
+        </form>
+
+        <hr class="my-4 border-dark">
+
+        <p id="workshop-message"></p>
+
+        <table class="table" id="workshop-info"></table>
+    </div>
+</div>
+
+
+<!--<script src="/js/Zoom/tool.js"></script>-->
+<!--<script src="/js/Zoom/embed.js"></script>-->
+
+<script src="/js/adminAsyncUpdates.js"></script>
+<script></script>
+
+</body>
+</html>

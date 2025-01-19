@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nodejs
+  name: nodejs
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nodejs
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nodejs
+    spec:
+      containers:
+        - image: gcr.io/cogteach-distributed/github_voivio_gazelearning
+          imagePullPolicy: IfNotPresent
+          name: github-voivio-gazelearning-sha256-1
+          volumeMounts:
+          - mountPath: /mnt/fileserver
+            name: mypvc
+      volumes:
+      - name: mypvc
+        persistentVolumeClaim:
+          claimName: fileserver-claim
+          readOnly: false
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    app: nodejs
+  name: nodejs-hpa-ause
+  namespace: default
+spec:
+  maxReplicas: 5
+  metrics:
+    - resource:
+        name: cpu
+        targetAverageUtilization: 80
+      type: Resource
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nodejs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodejs-nodeport-service
+  namespace: default
+spec:
+  selector:
+    app: nodejs
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000

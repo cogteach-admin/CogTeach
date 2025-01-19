@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dedicated-nodejs
+  name: dedicated-nodejs
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: dedicated-nodejs
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: dedicated-nodejs
+    spec:
+      containers:
+        - image: gcr.io/cogteach-distributed/github_voivio_gazelearning
+          imagePullPolicy: IfNotPresent
+          name: github-voivio-gazelearning-sha256-1
+          # Default command for container to run is node server.js
+          command: [ "node" ]
+          args: [ "dedicated_server.js" ]
+          volumeMounts:
+          - mountPath: /mnt/fileserver
+            name: mypvc
+      volumes:
+      - name: mypvc
+        persistentVolumeClaim:
+          claimName: fileserver-claim
+          readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dedicated-nodejs-nodeport-service
+  namespace: default
+spec:
+  selector:
+    app: dedicated-nodejs
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000

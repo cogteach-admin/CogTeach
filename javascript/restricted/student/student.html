@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>CogTeach - Student</title>
+    <link rel="shortcut icon" type="image/ico" href="/media/favicon.ico"/>
+    <meta charset="utf-8"/>
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/1.8.5/css/bootstrap.css"/>
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/1.8.5/css/react-select.css"/>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <script src="https://api.gazerecorder.com/GazeCloudAPI.js"></script>
+    <script src="/js/webgazer_edited.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <!--<script src="js/camera_utils.js" crossorigin="anonymous"></script>-->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script> -->
+    <script src="https://unpkg.com/mathjs@8.0.1/lib/browser/math.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"></script>
+
+    <script src="/js/gazeClass.js"></script>
+    <script src="/js/Engbert_Kliegl_math.js"></script>
+
+    <style type="text/css">
+        body {
+            overflow: hidden;
+        }
+
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        img .slide {
+            margin-top: 5%;
+            width: 80%;
+        }
+
+        #confused_report_btn {
+            top: 0;
+            right: 5%;
+            width: 10vh;
+            height: 10vh;
+            border: 5px solid grey;
+            background: grey;
+            position: absolute;
+        }
+
+        #container {
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* for #websdk-iframe previously when using Zoom*/
+        #jitsiConferenceFrame0 {
+            width: 100%;
+            height: 100%;
+            border: 1px dashed red;
+            position: fixed;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
+        }
+
+        /* See: https://developer.mozilla.org/en-US/docs/web/css/pointer-events */
+        #plotting_svg, #cognitive_svg, #action_svg {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        #plotting_svg {
+            z-index: 100;
+        }
+
+        #plotting_svg g {
+            pointer-events: auto;
+        }
+
+        .invisible {
+            visibility: hidden;
+        }
+
+        .dev {
+            visibility: hidden;
+        }
+
+        .skip {
+            visibility: hidden;
+        }
+
+        #jitsiContainer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 90%;
+        }
+    </style>
+
+</head>
+
+<body onkeypress="report(event)">
+<!--  SVG Visualization and Synchronization Settings  -->
+<input id="svg_display" type="button" value="Hide SVG" class="dev" onclick="svgDisplay(event);"/>
+
+<!--  Confusion Detection Settings  -->
+<button id="neutral_btn" type="button" class="dev" onclick="reportNeutral();">Report Neutral</button>
+<button id="confused_btn" type="button" class="dev" onclick="reportConfusion();">Report Confusion</button>
+
+<div id="confused_report_btn" hidden>
+    <img style="max-width: 100%; max-height: 100%;"
+         src="/media/confusion-mark.svg" alt="Click to report confusion.">
+</div>
+
+
+<!--dev only - start system-->
+<button id="signalling" type="button" class="dev" onclick="informalInfer()">Start Signalling [dev only]</button>
+
+<!--  Facial Expression  -->
+<div class="meshvideo">
+    <video id="input_video" style='display:none;'></video>
+    <canvas id="output_canvas" width="320px" height="180px" style='display:none;'></canvas>
+</div>
+<span id='status_bar'> </span>
+
+<!-- Gaze Point Visualization -->
+<!--<div id="gaze"-->
+<!--     style='position: absolute;display:none;width: 100px;height: 100px;border-radius: 50%;border: solid 2px  rgba(255, 255,255, .2);	box-shadow: 0 0 100px 3px rgba(125, 125,125, .5);	pointer-events: none;	z-index: 999999'>-->
+<!--</div>-->
+
+<!-- Modal. Select camera if multiple cameras are detected. Modal is achieved by using bootstrap.-->
+<div id="camera-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4 id="camera-modal-title">
+                    Camera selection.
+                </h4>
+                <p>
+                    The browser detects multiple cameras are connected to your device. Please select the one you would
+                    like to use and then click <b>Confirm</b>. We recommend choosing a front-facing camera.
+                </p>
+                <p id="camera-modal-description">
+                    Loading...
+                </p>
+                <div class="modal-footer">
+                    <button id="camera-modal-btn" type="button" class="btn btn-primary btn-sm" data-dismiss="modal">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal. Prevent teacher from operating before scheduled time. Modal is achieved by using bootstrap.-->
+<div id="before-lecture-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4 id="before-lecture-modal-title">
+                    Next scheduled lecture will start within:
+                </h4>
+                <h4 id="before-lecture-modal-description">
+                    Loading...
+                </h4>
+                <p id="before-lecture-modal-note">
+                    Access to the page will be granted <b>10 minutes</b> earlier to complete pre-lecture procedure. We
+                    appreciate your patience.
+                </p>
+                <div class="modal-footer">
+                    <button id="before-lecture-modal-close-btn" type="button" class="btn btn-light btn-sm skip"
+                            data-dismiss="modal"> Quick Access [dev only]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal. Choose to calibrate GazeCloud or not. Modal is achieved by using bootstrap.-->
+<div id="calibrate-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4 id="calibrate-modal-title">
+                    Please calibrate the gaze estimator for gaze collection.
+                </h4>
+                <p id="calibrate-modal-description">
+                    <!--todo: prepare an image showing the calibration process-->
+                    The gaze estimator detects which part of the screen you are looking at. Nine red dots will be
+                    displayed on the screen.
+                    You will be asked to
+                    click each red dots shown on the screen until it returns yellow.
+                    <br>
+                    Click <b>Calibrate</b> to proceed. Please follow the instruction provided.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button id="calibrate-modal-close-btn" type="button" class="btn btn-light btn-sm skip"
+                        data-dismiss="modal"> Skip
+                </button>
+                <button id="calibrate-modal-btn" type="button" class="btn btn-primary btn-sm" data-dismiss="modal">
+                    Calibrate
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal. Choose to Collect Confusion Expressions or not. Modal is achieved by using bootstrap.-->
+<div id="facial-expression-instruction-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4 id="facial-expression-instruction-modal-title">
+                    Please collect normal expressions.
+                </h4>
+                <p>
+                    We collect your different facial expressions to infer your understanding about the contents.
+                </p>
+                <p id="facial-expression-instruction-modal-description">
+                    Please make your natural faces. You will be shown the video captured from the camera to help you
+                    check your facial expressions.<br>
+                    Click <b>Proceed</b> to continue.
+                    <!-- else you could directly start to use the system.-->
+                </p>
+                <div>
+                    <img id="initImage" src="/media/neutral-small.jpg">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="facial-expression-instruction-modal-close-btn" type="button"
+                        class="btn btn-light btn-sm skip" data-dismiss="modal">No
+                </button>
+                <button id="facial-expression-instruction-modal-btn" type="button" class="btn btn-primary btn-sm"
+                        data-dismiss="modal">Proceed
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal. Collect Confusion Expressions. Modal is achieved by using bootstrap.-->
+<div id="facial-expression-collection-modal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-body">
+                <h4 id="facial-expression-collection-modal-title">
+                    Please make normal expressions.
+                </h4>
+                <p id="facial-expression-collection-modal-description">
+                    Press <b>Collect</b> if you are ready. The collection starts once you click the button.
+                </p>
+                <canvas id="collect_canvas" width="320px" height="180px" style='display:block;'></canvas>
+            </div>
+            <div class="modal-footer">
+                <button id="facial-expression-collection-modal-close-btn" type="button"
+                        class="btn btn-light btn-sm skip" data-dismiss="modal">Cancel
+                </button>
+                <button id="facial-expression-collection-modal-btn" type="button" class="btn btn-primary btn-sm"
+                        data-dismiss="modal">Collect
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--  Main body. Zoom iframe will be embedded via Zoom/embed.js below  -->
+<div id="container" ondblclick="event.preventDefault();">
+    <!--<svg id="plotting_svg"></svg>-->
+    <!-- <img src='regression.jpg'> -->
+</div>
+
+<!--<script src="js/Zoom/tool.js"></script>-->
+<!--<script src="js/Zoom/embed.js"></script> -->
+<script src="/js/globalSetting.js"></script>
+<script type="module" src="/js/studentClient.js"></script>
+<script src='https://meet.jit.si/external_api.js'></script>
+
+<script>
+    let informal_infer;
+
+    function informalInfer() {
+        if (typeof informal_infer === "undefined") {
+            // No informal signalling is registered
+            informal_infer = setInterval(() => {
+                updateGazePoints()
+                    .catch(err => {
+                        clearInterval(informal_infer);
+                        console.log(err)
+                    });
+            }, inferInterval);
+            document.getElementById("signalling").innerText = "Stop signalling [dev only]";
+            console.log('============ Start Signalling ============');
+        } else {
+            // Clicked to unregister signalling
+            clearInterval(informal_infer);
+            informal_infer = undefined;
+            document.getElementById("signalling").innerText = "Start signalling [dev only]";
+            console.log('============ Stop Signalling ============');
+        }
+    }
+</script>
+
+</body>
+
+</html>

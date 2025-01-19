@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>CogTeach - Student</title>
+    <link rel="shortcut icon" type="image/ico" href="/media/favicon.ico"/>
+    <meta charset="utf-8"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <script src="https://api.gazerecorder.com/GazeCloudAPI.js"></script>
+    <script src="/js/webgazer_edited.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>-->
+    <script src="/js/camera_utils.js" crossorigin="anonymous"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js"> </script> -->
+    <script src="https://unpkg.com/mathjs@8.0.1/lib/browser/math.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"></script>
+
+    <script src="/js/gazeClass.js"></script>
+    <script src="/js/Engbert_Kliegl_math.js"></script>
+
+    <style type="text/css">
+        body {
+            overflow: hidden;
+        }
+
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        img .slide {
+            margin-top: 5%;
+            width: 80%;
+        }
+
+        #confused_report_btn {
+            top: 0;
+            right: 5%;
+            width: 10vh;
+            height: 10vh;
+            border: 5px solid grey;
+            background: grey;
+            position: absolute;
+        }
+
+        #container {
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* for #websdk-iframe previously when using Zoom*/
+        #talk-video {
+            width: 100%;
+            height: 100%;
+            border: 1px dashed red;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
+        }
+
+        .inputs input {
+            width: 40px;
+            height: 40px
+        }
+
+        /* See: https://developer.mozilla.org/en-US/docs/web/css/pointer-events */
+        #plotting_svg, #cognitive_svg, #action_svg, #confusion_svg {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        #plotting_svg {
+            z-index: 100;
+        }
+
+        #plotting_svg g {
+            pointer-events: auto;
+        }
+
+        .invisible {
+            visibility: hidden;
+        }
+
+        .dev, .skip {
+            visibility: hidden;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<!--  Confusion Detection Settings  -->
+<div id="confused_report_btn" hidden>
+    <img style="max-width: 100%; max-height: 100%;"
+         src="/media/confusion-mark.svg" alt="Click to report confusion.">
+</div>
+
+<!--  Facial Expression  -->
+<div class="meshvideo">
+    <video id="input_video" style='display:none;'></video>
+    <canvas id="output_canvas" width="100%" height="100%" style='display:none;'></canvas>
+</div>
+<span id='status_bar'> </span>
+
+<!-- Gaze Point Visualization -->
+<!--<div id="gaze"-->
+<!--     style='position: absolute;display:none;width: 100px;height: 100px;border-radius: 50%;border: solid 2px  rgba(255, 255,255, .2);	box-shadow: 0 0 100px 3px rgba(125, 125,125, .5);	pointer-events: none;	z-index: 999999'>-->
+<!--</div>-->
+
+<!-- Modal. Select camera if multiple cameras are detected. Modal is achieved by using bootstrap.-->
+<div class="modal fade" role="dialog" id="init-modal">
+    <div class="modal-dialog" id="init-modalDialog">
+        <div class="modal-content" id="init-modalContent">
+            <div class="modal-body" id="init-modalBody">
+                <h4 id="init-title">We are initializing the page...</h4>
+                <p id="init-description-0">We appreciate your patience.</p>
+                <p id="init-description-1" hidden>Please select the lecture from the previous selection page again.</p>
+            </div>
+            <div class="modal-footer" id="init-modalFooter">
+                <a class="btn btn-primary btn-sm" id="init-go-back-btn" href="/student/talkSelection.html" hidden>Go back</a>
+                <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal" id="init-btn" hidden>I'm Ready!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" role="dialog" id="camera-modal">
+    <div class="modal-dialog" id="camera-modalDialog">
+        <div class="modal-content" id="camera-modalContent">
+            <div class="modal-body" id="camera-modalBody"><h4 id="camera-title">Camera selection.</h4>
+                <p id="camera-description-0">The browser detects multiple cameras are connected to your device. Please
+                    select the one you would like to use and then click <b>Confirm</b>. Please choose a
+                    front-facing camera.</p>
+                <p id="camera-description-1">Loading...</p>
+                <video id="camera-selection-video" width="320" height="240" style='display:none;'></video>
+            </div>
+            <div class="modal-footer" id="camera-modalFooter">
+                <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal" id="camera-btn">Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" role="dialog" id="pre-test-modal">
+    <div class="modal-dialog" id="pre-test-modalDialog">
+        <div class="modal-content" id="pre-test-modalContent">
+            <div class="modal-body" id="pre-test-modalBody"><h4 id="pre-test-title">How much do you know before the
+                talk?</h4>
+                <p id="pre-test-description-0">Scientists prove that taking a quiz before the lecture is helpful for
+                    focusing on important concepts introduced in the lecture.</p>
+                <div id="pre-test-description-1">After completing this test:</div>
+                <div><a href="" id="pre-test-link" target="_blank"></a></div>
+                <div class="inputs d-flex flex-row justify-content-center mt-2" id="pre-test-description-2">
+                    <p>Please enter the <span style="color: #ef476f">confirmation code after the test</span> here:</p>
+                    <input class="m-2 text-center rounded" type="text" id="pre-test-1" maxlength="1">
+                    <input class="m-2 text-center rounded" type="text" id="pre-test-2" maxlength="1">
+                    <input class="m-2 text-center rounded" type="text" id="pre-test-3" maxlength="1">
+                    <input class="m-2 text-center rounded" type="text" id="pre-test-4" maxlength="1"></div>
+                <div id="pre-test-description-3" style="color: #ef476f" hidden>The code is incorrect.</div>
+            </div>
+            <div class="modal-footer" id="pre-test-modalFooter">
+                <button class="btn btn-secondary btn-sm skip" type="button" data-dismiss="modal"
+                        id="pre-test-close-btn">Skip
+                </button>
+                <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal" id="pre-test-btn">Completed
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" role="dialog" id="calibration-modal">
+    <div class="modal-dialog" id="calibration-modalDialog">
+        <div class="modal-content" id="calibration-modalContent">
+            <div class="modal-body" id="calibration-modalBody"><h4 id="calibration-title">Please calibrate the gaze
+                estimator for gaze collection.</h4>
+            <p id="calibration-modal-description-0">
+                <!--todo: prepare an image showing the calibration process-->
+                The gaze estimator detects which part of the screen you are looking at. Nine red dots will be
+                displayed on the screen.
+                You will be asked to
+                click each red dots shown on the screen until it returns yellow.
+                <br>
+                Click <b>Calibrate</b> to proceed. Please follow the instruction provided.
+            </p>
+            </div>
+            <div class="modal-footer" id="calibration-modalFooter">
+                <button class="btn btn-secondary btn-sm skip" type="button" data-dismiss="modal"
+                        id="calibration-close-btn">Skip
+                </button>
+                <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal" id="calibration-btn">
+                    Calibrate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal. Test before the lecture starts. Modal is achieved by using bootstrap.-->
+<div class="modal fade" role="dialog" id="post-test-modal">
+    <div class="modal-dialog" id="post-test-modalDialog">
+        <div class="modal-content" id="post-test-modalContent">
+            <div class="modal-body" id="post-test-modalBody"><h4 id="post-test-title">How much have you learned after the talk?</h4>
+                <p id="post-test-description-0">Completing this quiz helps you to recall and understand concepts in the talk.</p>
+                <div id="post-test-description-1">After completing this test:</div>
+                <div><a href="" id="post-test-link" target="_blank"></a></div>
+                <div class="inputs d-flex flex-row justify-content-center mt-2" id="post-test-description-2">
+                    <p>Please enter the <span style="color: #ef476f">confirmation code after the test</span> here:</p>
+                    <input class="m-2 text-center rounded" type="text" id="post-test-1" maxlength="1">
+                    <input class="m-2 text-center rounded" type="text" id="post-test-2" maxlength="1">
+                    <input class="m-2 text-center rounded" type="text" id="post-test-3" maxlength="1">
+                    <input class="m-2 text-center rounded" type="text" id="post-test-4" maxlength="1"></div>
+                <div id="post-test-description-3" style="color: #ef476f" hidden>The code is incorrect.</div>
+            </div>
+            <div class="modal-footer" id="post-test-modalFooter">
+                <button class="btn btn-secondary btn-sm skip" type="button" data-dismiss="modal"
+                        id="post-test-close-btn">Skip
+                </button>
+                <button class="btn btn-primary btn-sm" type="button" data-dismiss="modal" id="post-test-btn">Completed
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--  Main body. Zoom iframe will be embedded via Zoom/embed.js below  -->
+<div id="container" ondblclick="event.preventDefault();">
+    <!--<svg id="plotting_svg"></svg>-->
+    <!-- <img src='regression.jpg'> -->
+    <video playsinline style="pointer-events: none;" id="talk-video">
+        <source id="talk-video-source" type="video/mp4">
+        <track default id="talk-video-visual-cue" kind="metadata" srclang="en">
+        <track id="talk-video-subtitles" kind="subtitles" srclang="en">
+    </video>
+</div>
+
+
+<script src="/js/globalSetting.js"></script>
+<script type="module" src="/js/workshopClient.js"></script>
+
+</body>
+
+</html>

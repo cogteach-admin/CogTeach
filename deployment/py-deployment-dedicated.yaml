@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: py-dedicated-server
+  name: py-dedicated-server
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: py-dedicated-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: py-dedicated-server
+    spec:
+      containers:
+        - image: gcr.io/main-composite-344506/python
+          imagePullPolicy: IfNotPresent
+          name: py-image
+          # Default command for container to run is node server.js
+          command: [ "bash" ]
+          args: [ "run.sh" ]
+          volumeMounts:
+            - mountPath: /mnt/fileserver
+              name: mypvc
+      volumes:
+        - name: mypvc
+          persistentVolumeClaim:
+            claimName: nfs
+            readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: py-dedicated-server-nodeport-service
+  namespace: default
+spec:
+  selector:
+    app: py-dedicated-server
+  type: NodePort
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 9000
+    - name: shared-info-manager
+      protocol: TCP
+      # for shared_info_manager 
+      port: 12580
+      targetPort: 12580

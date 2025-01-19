@@ -1,0 +1,1 @@
+This folder contains the configuration yaml file for continuous deployment (CD) on Google Cloud with Kubernetes.

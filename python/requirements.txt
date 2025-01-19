@@ -1,0 +1,9 @@
+Flask
+gunicorn
+numpy==1.19.3
+scikit-learn
+joblib
+opencv-python
+mediapipe
+tqdm
+timeloop

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: js-dedicated-server
+  name: js-dedicated-server
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: js-dedicated-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: js-dedicated-server
+    spec:
+      containers:
+        - image: gcr.io/main-composite-344506/javascript
+          imagePullPolicy: IfNotPresent
+          name: js-image
+          # Default command for container to run is node server.js
+          command: [ "node" ]
+          args: [ "dedicated_server.js" ]
+          volumeMounts:
+          - mountPath: /mnt/fileserver
+            name: mypvc
+      volumes:
+      - name: mypvc
+        persistentVolumeClaim:
+          claimName: nfs
+          readOnly: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: js-dedicated-server-nodeport-service
+  namespace: default
+spec:
+  selector:
+    app: js-dedicated-server
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000

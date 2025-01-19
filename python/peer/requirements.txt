@@ -1,0 +1,12 @@
+flask
+gunicorn
+gevent
+timeloop
+numpy
+pandas
+scikit-image
+scikit-learn
+scipy
+# The following two is required when computing the visual cues offline
+# webvtt-py
+# opencv

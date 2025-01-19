@@ -1,0 +1,64 @@
+{
+  "name": "gazelearning",
+  "version": "1.0.0",
+  "description": "xxx",
+  "main": "client.js",
+  "scripts": {
+    "test": "jest",
+    "start": "node server.js",
+    "local": "node_modules/.bin/concurrently \\\"http-server -a 0.0.0.0 -p 9999 -c-1 -o index.html\\\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruw001/gazelearning.git"
+  },
+  "keywords": [
+    "gaze"
+  ],
+  "author": "Ru",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ruw001/gazelearning/issues"
+  },
+  "homepage": "https://github.com/ruw001/gazelearning#readme",
+  "dependencies": {
+    "@zoomus/websdk": "^1.8.1",
+    "bootstrap": "^4.5.3",
+    "connect-multiparty": "^2.2.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "experss": "0.0.1-security",
+    "express": "^4.17.1",
+    "jquery": "^3.5.1",
+    "jsrsasign": "^10.0.3",
+    "jsrsasign-util": "^1.0.0",
+    "machinelearn": "^2.1.5",
+    "math.js": "^1.1.46",
+    "ml-kmeans": "^5.0.0",
+    "ml-matrix": "^6.5.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "socket.io": "^3.1.2",
+    "sweetalert": "^2.1.2",
+    "webgazer": "^2.0.1",
+    "winston": "^3.3.3"
+  },
+  "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.16.8",
+    "concurrently": "^3.5.1",
+    "http-server": "^0.12.1",
+    "jest": "^27.5.1",
+    "mathjs": "^10.1.1"
+  },
+  "babel": {
+    "env": {
+      "test": {
+        "plugins": [
+          "@babel/plugin-transform-modules-commonjs"
+        ]
+      }
+    }
+  }
+}

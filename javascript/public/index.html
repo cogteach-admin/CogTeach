@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>CogTeach</title>
+    <link rel="shortcut icon" type="image/ico" href="media/favicon.ico"/>
+    <meta charset="utf-8"/>
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/1.8.5/css/bootstrap.css"/>
+
+    <!--<script src="https://cdn.socket.io/3.1.1/socket.io.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.1/socket.io.js"></script>
+
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+        #welcome-alert, #welcome-workshop-alert {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="welcome-alert" class="alert alert-success" role="alert">
+    Thanks for your interest in CogTeach project. Click <a href="info.html">here</a> to learn more about the project.
+</div>
+<!--<div id="welcome-workshop-alert" class="alert alert-warning" role="alert">-->
+<!--    If you are registered for the AI workshop, please allow us a few more days on the enrollment. The AI workshop is not started yet and more info will be released in the next few days. 😊-->
+<!--</div>-->
+<div id="top-alert" class="alert alert-danger" role="alert" hidden>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- https://bootsnipp.com/forms for form generation -->
+
+        <form id="login-form" class="form-horizontal" novalidate>
+            <fieldset>
+
+                <!-- Form Name -->
+                <legend class="navbar-brand text-center">CogTeach Login Portal</legend>
+
+                <!-- Multiple Radios -->
+                <div class="form-group">
+                    <label class="col-md-3 control-label">Identity</label>
+                    <div class="col-md-6">
+                        <div class="radio">
+                            <label for="identity-0">
+                                <input type="radio" name="identity" id="identity-0" value="1" checked="checked">
+                                Student
+                            </label>
+                        </div>
+                        <div class="radio">
+                            <label for="identity-1">
+                                <input type="radio" name="identity" id="identity-1" value="2">
+                                Teacher
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Select Basic -->
+                <div class="form-group">
+                    <label class="col-md-3 control-label" for="passcode">Passcode</label>
+                    <div class="col-md-6">
+                        <input type="password" name="passcode" id="passcode" class="form-control" disabled>
+                        <!-- <option value="1">Option one</option>
+                        <option value="2">Option two</option> -->
+                        <!-- </select> -->
+                    </div>
+                </div>
+
+                <!-- Name input-->
+                <div class="form-group" id="name-form-group" hidden>
+                    <label class="col-md-3 control-label">Name</label>
+                    <div class="form-row">
+                        <div class="col-md-3">
+                            <input id="first-name" name="first-name" type="text" placeholder="First Name"
+                                   class="form-control input-md">
+                        </div>
+                        <div class="col-md-3">
+                            <input id="last-name" name="last-name" type="text" placeholder="Last Name"
+                                   class="form-control input-md">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email input-->
+                <div class="form-group" id="email-form-group" hidden>
+                    <label class="col-md-3 control-label" for="email">Email</label>
+                    <div class="col-md-4">
+                        <input type="email" name="email" id="email" class="form-control" required>
+                        <div id="invalid-feedback" style="color:#ef476f" hidden>
+                            Please provide a valid email address.
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <small id="passwordHelpBlock" class="form-text">
+                            <b>UCSD emails</b> are required to receive compensation.
+                        </small>
+                    </div>
+                </div>
+
+                <!--                &lt;!&ndash; Privacy &ndash;&gt;-->
+                <!--                <div class="form-group">-->
+                <!--                    <label class="col-md-3 control-label"></label>-->
+                <!--                    <div class="col-md-6">-->
+                <!--                        <div class="checkbox">-->
+                <!--                            <input type="checkbox" class="form-check-input" id="privacy">-->
+                <!--                            <label class="form-check-label" for="privacy">I have read related <a href="#">privacy-->
+                <!--                                policy</a>.</label>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
+                <!--                </div>-->
+
+                <!-- Button -->
+                <div class="form-group">
+                    <label class="col-md-3 control-label"></label>
+                    <div class="col-md-6">
+                        <button id="submitbtn" class="btn btn-primary" disabled>Log In</button>
+                        <!--                        <button id="devbtn" class="btn btn-primary dev">Log In [dev, always on]</button>-->
+                    </div>
+                </div>
+
+            </fieldset>
+        </form>
+    </div>
+
+    <div class="row" id="lecture-info" hidden>
+        <div class="col-md-3">
+        </div>
+        <div class="card col-md-6">
+            <h5 class="card-header">
+                <hr style="height:2px;border:none;color:#333;background-color:#333;">
+            </h5>
+            <div class="card-body">
+                <h3 class="card-title" id="lecture-title">Lecture title</h3>
+                <p class="card-text" id="lecture-abstract">Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                    Nulla suscipit diam at est rutrum, eu luctus eros iaculis.</p>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item" id="lecture-instructor">Cras justo odio</li>
+                <li class="list-group-item" id="lecture-time">Dapibus ac facilisis in</li>
+                <!--<li class="list-group-item" id="lecture-zoomid">Vestibulum at eros</li>-->
+            </ul>
+            <hr style="height:2px;border:none;color:#333;background-color:#333;">
+        </div>
+    </div>
+
+    <div class="row" id="talk-info" hidden>
+        <div class="col-md-3">
+        </div>
+        <div class="card col-md-6">
+            <h5 class="card-header">
+                <hr style="height:2px;border:none;color:#333;background-color:#333;">
+            </h5>
+            <div class="card-body">
+                <h3 class="card-title" id="talk-title">Syllabus of AI Workshop</h3>
+                <p class="card-text" id="talk-abstract">Available talks are shown with green badges. Please log in with
+                    the <b>name used for registration</b> to access the videos.</p>
+                <ul class="list-group list-group-flush" id="talk-list">
+                </ul>
+            </div>
+            <hr style="height:2px;border:none;color:#333;background-color:#333;">
+        </div>
+    </div>
+
+    <div class="row" style="margin-bottom: 30px">
+        <div class="col-md-3">
+        </div>
+        <div class="col-md-3">
+            <input id="admin-passcode" type="password" class="form-control input-md">
+        </div>
+        <div class="col-md-3">
+            <button id="adminbtn" class="btn btn-danger"
+                    onclick="digestMessage(document.getElementById('admin-passcode').value).then(v => loginAsAdmin(v))">
+                Login as Admin
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script src="/js/index.js"></script>
+<script>
+    window.onload = () => {
+        fetchLectureMode().then(
+            mode => {
+                lectureMode = mode;
+                console.info(`Lecture mode: ${lectureMode}`);
+                switch (mode) {
+                    case "async":
+                        fetchTalks();
+                        document.getElementById('email-form-group').hidden = false;
+                        break
+                    case "sync":
+                        fetchTrials();
+                        document.getElementById('name-form-group').hidden = false;
+                        break
+                    default:
+                        fetchTrials();
+                        document.getElementById('name-form-group').hidden = false;
+                }
+            }
+        ).catch(err => console.error(err));
+        // Select identity. identity-1 as Teacher and identity-0 as student
+        document.getElementById("identity-1").addEventListener("input", selectIdentityTeacher);
+        document.getElementById("identity-0").addEventListener("input", selectIdentityStudent);
+        // Submit basic information to server
+        // Will only be triggered by student/teacher. Admin login is handled elsewhere
+        document.addEventListener("submit", loginAsUser);
+    }
+</script>
+</body>
+
+</html>
+    

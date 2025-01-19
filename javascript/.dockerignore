@@ -1,0 +1,13 @@
+node_modules/
+
+public/testPages/
+public/media/browser/
+public/media/calibration/
+public/media/example/
+
+UnitTests/
+
+deployment.yaml
+deployment_dedicated.yaml
+
+*.pptx

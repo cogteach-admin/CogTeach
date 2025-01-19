@@ -1,0 +1,55 @@
+<!DOCTYPE HTML>
+<!-- This page is where meeting really happens. Jump from startMeeting.html -->
+
+<html lang="en">
+
+<head>
+    <title>Meeting iframe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://api.gazerecorder.com/GazeCloudAPI.js"></script>
+
+    <style type="text/css">
+        body {
+            overflow: hidden;
+        }
+
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 5%;
+            width: 80%;
+        }
+
+        #zmmtg-root {
+            height: auto;
+            width: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- import ZoomMtg dependencies -->
+    <script src="https://source.zoom.us/1.8.5/lib/vendor/react.min.js"></script>
+    <script src="https://source.zoom.us/1.8.5/lib/vendor/react-dom.min.js"></script>
+    <script src="https://source.zoom.us/1.8.5/lib/vendor/redux.min.js"></script>
+    <script src="https://source.zoom.us/1.8.5/lib/vendor/redux-thunk.min.js"></script>
+    <script src="https://source.zoom.us/1.8.5/lib/vendor/lodash.min.js"></script>
+    <!-- import ZoomMtg -->
+    <script src="https://source.zoom.us/zoom-meeting-1.8.5.min.js"></script>
+    <!-- Meeting js codes -->
+    <script src="js/Zoom/tool.js"></script>
+    <script src="js/Zoom/vconsole.min.js"></script>
+    <script src="js/Zoom/meeting.js"></script>
+
+    <script>
+        const simd = async () => WebAssembly.validate(new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 10, 9, 1, 7, 0, 65, 0, 253, 15, 26, 11]))
+        simd().then((res) => {
+          console.log("simd check", res);
+        });
+    </script>
+
+</body>
+
+</html>
