@@ -2,7 +2,7 @@
 
 A real-time, multimodal interactive feedback system for online lectures.
 
-Note that this system includes two modes: async mode and sync mode, corresponding to our [PeerEdu](https://github.com/songlinxu/PeerEdu) (CHI 2025) and [Classroom Simulacra](https://arxiv.org/abs/2502.02780) (CHI 2025) paper, respectively.
+**Note that this system includes two modes: async mode and sync mode, corresponding to our [PeerEdu](https://github.com/songlinxu/PeerEdu) (CHI 2025) and [Classroom Simulacra](https://arxiv.org/abs/2502.02780) (CHI 2025) paper, respectively**.
 
 This repository contains prototype code for the CogTeach system. Please note that some components may be deprecated and
 the codebase is not actively maintained.
